@@ -1,1430 +1,1497 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>News Monitor - Pemantauan & Pengelompokan Berita Otomatis</title>
-  <meta name="description" content="Aplikasi pemantauan berita otomatis berbasis topik dan lokasi dengan pengelompokan kejadian cerdas, berjalan statis di GitHub Pages dengan scraper GitHub Actions.">
+  <meta name="description"
+    content="Pemantauan berita otomatis berbasis topik dan lokasi dengan pengelompokan kejadian.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            display: ['"Outfit"', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              500: '#3b82f6',
-              600: '#2563eb',
-              700: '#1d4ed8',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@0.469.0"></script>
   <style>
-    /* Custom Styling & Glassmorphism */
     :root {
-      --bg-body: #070b14;
-      --card-bg: rgba(15, 23, 42, 0.7);
-      --border-color: rgba(255, 255, 255, 0.08);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+      --bg1: #eceef0;
+      --bg2: #d9dbe0;
+      --surf: #f5f6f8;
+      --well: #e8e9ed;
+      --ink: #14161a;
+      --on-ink: #fff;
+      --mute: #7b808a;
+      --hi: #fff;
+      --lo: rgba(150, 156, 168, .5);
+      --line: rgba(20, 22, 26, .07);
+      --red: #e5322d;
+      --ok: #1f9d63;
+      --blue: #7fa9c9;
     }
-    html:not(.dark) {
-      --bg-body: #f8fafc;
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --border-color: rgba(0, 0, 0, 0.08);
-      --text-main: #0f172a;
-      --text-muted: #64748b;
+
+    :root[data-theme="dark"] {
+      --bg1: #1b1c1f;
+      --bg2: #141518;
+      --surf: #222428;
+      --well: #1a1b1e;
+      --ink: #f2f3f5;
+      --on-ink: #14161a;
+      --mute: #8d929c;
+      --hi: rgba(255, 255, 255, .05);
+      --lo: rgba(0, 0, 0, .6);
+      --line: rgba(255, 255, 255, .07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      scroll-behavior: smooth
     }
 
     body {
-      background-color: var(--bg-body);
-      color: var(--text-main);
+      font-family: 'Manrope', system-ui, sans-serif;
+      color: var(--ink);
       min-height: 100vh;
-      transition: background-color 0.25s ease, color 0.25s ease;
+      background: linear-gradient(160deg, var(--bg1), var(--bg2)) fixed;
+      -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top) 0 0
     }
 
-    .glass-nav {
-      background: rgba(7, 11, 20, 0.85);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    html:not(.dark) .glass-nav {
-      background: rgba(255, 255, 255, 0.9);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    button,
+    input,
+    select {
+      font: inherit;
+      color: inherit
     }
 
-    .glass-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
+    button {
+      cursor: pointer
     }
 
-    /* Custom subtle scrollbars */
+    a {
+      color: inherit
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    svg.lucide {
+      width: 16px;
+      height: 16px;
+      flex: none
+    }
+
     ::-webkit-scrollbar {
       width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.2);
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(148, 163, 184, 0.4);
+      height: 6px
     }
 
-    /* Glowing animations */
-    @keyframes softGlow {
-      0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.4)); }
-      50% { opacity: 1; filter: drop-shadow(0 0 18px rgba(59, 130, 246, 0.7)); }
+    ::-webkit-scrollbar-thumb {
+      background: var(--lo);
+      border-radius: 9px
     }
-    .glow-pulse {
-      animation: softGlow 2.5s infinite ease-in-out;
+
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px
+    }
+
+    /* surfaces */
+    .raise {
+      background: var(--surf);
+      border-radius: 28px;
+      box-shadow: -6px -6px 16px var(--hi), 8px 8px 22px var(--lo)
+    }
+
+    .well {
+      background: var(--well);
+      border-radius: 20px
+    }
+
+    .inset {
+      background: var(--well);
+      border-radius: 999px;
+      box-shadow: inset 3px 3px 7px var(--lo), inset -3px -3px 7px var(--hi)
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--surf);
+      padding: 9px 15px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: -3px -3px 8px var(--hi), 4px 4px 10px var(--lo);
+      transition: box-shadow .15s, transform .15s
+    }
+
+    .pill:active,
+    .pill.on {
+      box-shadow: inset 3px 3px 7px var(--lo), inset -3px -3px 7px var(--hi)
+    }
+
+    .pill.dark {
+      background: var(--ink);
+      color: var(--on-ink);
+      box-shadow: 3px 4px 10px var(--lo)
+    }
+
+    .pill.dark:active {
+      transform: scale(.97)
+    }
+
+    .pill.sm {
+      padding: 7px 12px;
+      font-size: 11px
+    }
+
+    .pill.round {
+      width: 38px;
+      height: 38px;
+      padding: 0
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--well);
+      color: var(--mute)
+    }
+
+    .tag.red {
+      background: var(--red);
+      color: #fff
+    }
+
+    .tag.ok {
+      color: var(--ok)
+    }
+
+    .muted {
+      color: var(--mute)
+    }
+
+    /* layout */
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 16px
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 30;
+      margin: 10px 0 22px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 999px
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--on-ink);
+      display: grid;
+      place-items: center;
+      flex: none
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.02em
+    }
+
+    .brand p {
+      font-size: 11px;
+      color: var(--mute);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+      padding-bottom: 120px
+    }
+
+    .side {
+      position: sticky;
+      top: 96px;
+      max-height: calc(100vh - 116px);
+      overflow: auto;
+      padding: 4px 10px 18px 4px;
+      margin: -4px 0 0 -4px
+    }
+
+    .card {
+      padding: 20px
+    }
+
+    .card+.card {
+      margin-top: 20px
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px
+    }
+
+    .card-head h2 {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .stack>*+* {
+      margin-top: 12px
+    }
+
+    /* inputs */
+    .field {
+      width: 100%;
+      border: 0;
+      background: var(--well);
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 13px;
+      box-shadow: inset 3px 3px 7px var(--lo), inset -3px -3px 7px var(--hi)
+    }
+
+    .field::placeholder {
+      color: var(--mute)
+    }
+
+    .field-wrap {
+      position: relative
+    }
+
+    .field-wrap .count {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--mute)
+    }
+
+    .field-icon {
+      padding-left: 40px
+    }
+
+    .field-wrap>svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--mute)
+    }
+
+    .linkbtn {
+      background: none;
+      border: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mute);
+      text-decoration: underline
+    }
+
+    .err {
+      font-size: 12px;
+      color: var(--red);
+      display: flex;
+      gap: 6px;
+      align-items: center
+    }
+
+    /* keyword rows */
+    .kw {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 20px;
+      background: var(--surf);
+      box-shadow: -3px -3px 8px var(--hi), 4px 4px 10px var(--lo)
+    }
+
+    .kw.off {
+      opacity: .55
+    }
+
+    .kw-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px
+    }
+
+    .kw-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 600
+    }
+
+    .kw-name span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .sw {
+      position: relative;
+      width: 38px;
+      height: 22px;
+      border-radius: 999px;
+      border: 0;
+      flex: none;
+      background: var(--well);
+      box-shadow: inset 2px 2px 5px var(--lo), inset -2px -2px 5px var(--hi)
+    }
+
+    .sw::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--mute);
+      transition: transform .2s, background .2s
+    }
+
+    .sw.on::after {
+      transform: translateX(16px);
+      background: var(--ink)
+    }
+
+    .kw-list {
+      max-height: 360px;
+      overflow: auto;
+      padding: 6px 6px 10px 4px;
+      margin: 0 -6px 0 -4px
+    }
+
+    .syns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px
+    }
+
+    .icon-btn {
+      border: 0;
+      background: none;
+      padding: 6px;
+      border-radius: 50%;
+      color: var(--mute);
+      display: grid;
+      place-items: center
+    }
+
+    .icon-btn:hover {
+      color: var(--ink)
+    }
+
+    /* filter bar */
+    .filters {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    .row.between {
+      justify-content: space-between
+    }
+
+    .seg {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--well);
+      box-shadow: inset 3px 3px 7px var(--lo), inset -3px -3px 7px var(--hi)
+    }
+
+    .seg button {
+      border: 0;
+      background: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mute)
+    }
+
+    .seg button.on {
+      background: var(--ink);
+      color: var(--on-ink)
+    }
+
+    .chips {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 4px 12px;
+      margin: 0 -4px -8px
+    }
+
+    .chips::-webkit-scrollbar {
+      display: none
+    }
+
+    .selwrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px
+    }
+
+    .selwrap select {
+      border: 0;
+      background: none;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 9px 0;
+      outline: none;
+      cursor: pointer
+    }
+
+    .selwrap select option {
+      background: var(--surf);
+      color: var(--ink)
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 0 6px;
+      font-size: 12px;
+      color: var(--mute)
+    }
+
+    .stats strong {
+      color: var(--ink)
+    }
+
+    /* group card */
+    .groups>*+* {
+      margin-top: 18px
+    }
+
+    .group {
+      padding: 10px
+    }
+
+    .group.fresh {
+      outline: 1.5px solid rgba(229, 50, 45, .35)
+    }
+
+    .ghead {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
+      padding: 18px 18px 16px;
+      cursor: pointer;
+      user-select: none
+    }
+
+    .ghead:hover {
+      filter: brightness(.98)
+    }
+
+    .gmain {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .gtags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .gtitle {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.015em;
+      line-height: 1.3;
+      overflow-wrap: anywhere
+    }
+
+    .gmeta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--mute);
+      font-weight: 500
+    }
+
+    .gmeta span {
+      display: inline-flex;
+      gap: 5px;
+      align-items: center
+    }
+
+    .gmeta b {
+      color: var(--ink)
+    }
+
+    .gbtns {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: none
+    }
+
+    .gbody {
+      padding: 16px 10px 8px
+    }
+
+    .gtools {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px
+    }
+
+    .media {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 11px;
+      color: var(--mute);
+      font-weight: 600
+    }
+
+    .art {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: 20px;
+      background: var(--surf);
+      box-shadow: -3px -3px 8px var(--hi), 4px 4px 10px var(--lo)
+    }
+
+    .art+.art {
+      margin-top: 12px
+    }
+
+    .art-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .art-top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: var(--mute)
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      flex: none
+    }
+
+    .art a.t {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.4;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      color: var(--mute)
+    }
+
+    .art a.t:hover {
+      text-decoration: underline;
+      color: var(--ink)
+    }
+
+    .art.unread a.t {
+      font-weight: 700;
+      color: var(--ink)
+    }
+
+    .empty {
+      padding: 44px 24px;
+      text-align: center
+    }
+
+    .empty .logo {
+      margin: 0 auto 14px;
+      background: var(--well);
+      color: var(--ink)
+    }
+
+    .empty h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px
+    }
+
+    .empty p {
+      font-size: 12px;
+      color: var(--mute);
+      max-width: 380px;
+      margin: 0 auto 16px
+    }
+
+    .skel {
+      height: 130px;
+      border-radius: 28px;
+      background: var(--surf);
+      box-shadow: -6px -6px 16px var(--hi), 8px 8px 22px var(--lo);
+      animation: pulse 1.4s infinite
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: .5
+      }
+    }
+
+    /* modal & toast */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(20, 22, 26, .45);
+      backdrop-filter: blur(6px)
+    }
+
+    .modal .raise {
+      max-width: 440px;
+      width: 100%;
+      padding: 24px
+    }
+
+    .modal label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 14px 0 6px
+    }
+
+    .modal .hint {
+      font-size: 11px;
+      color: var(--mute);
+      margin-top: 6px;
+      line-height: 1.5
+    }
+
+    #toastContainer {
+      position: fixed;
+      right: 16px;
+      bottom: 24px;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 340px;
+      pointer-events: none
+    }
+
+    .toast {
+      pointer-events: auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--on-ink);
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 4px 8px 22px var(--lo)
+    }
+
+    .toast.error {
+      background: var(--red);
+      color: #fff
+    }
+
+    .toast button {
+      background: none;
+      border: 0;
+      color: inherit;
+      font-size: 16px;
+      opacity: .7
+    }
+
+    /* bottom nav (mobile) */
+    .bottomnav {
+      display: none
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      border: 0;
+      background: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mute);
+      padding: 6px 0
+    }
+
+    .nav-item.on {
+      color: var(--ink)
+    }
+
+    .nav-center {
+      position: relative;
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 84px;
+      height: 48px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--hi);
+      box-shadow: -3px -3px 8px var(--hi), 4px 6px 14px var(--lo);
+      color: var(--ink)
+    }
+
+    :root:not([data-theme="dark"]) .nav-center {
+      background: #fff
+    }
+
+    .nav-center .tag {
+      position: absolute;
+      top: -2px;
+      right: 12px;
+      padding: 2px 6px;
+      font-size: 10px
+    }
+
+    @media(max-width:1023px) {
+      .grid {
+        grid-template-columns: 1fr
+      }
+
+      .side {
+        display: none;
+        position: fixed;
+        inset: 76px 12px 104px;
+        z-index: 45;
+        max-height: none;
+        margin: 0;
+        padding: 12px;
+        border-radius: 28px;
+        background: var(--surf);
+        box-shadow: -6px -6px 16px var(--hi), 8px 8px 30px var(--lo)
+      }
+
+      .side.open {
+        display: block
+      }
+
+      .desk {
+        display: none !important
+      }
+
+      .bottomnav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: fixed;
+        z-index: 50;
+        left: 12px;
+        right: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        padding: 10px 14px;
+        border-radius: 30px
+      }
+
+      #toastContainer {
+        bottom: 100px;
+        right: 12px;
+        left: 12px;
+        max-width: none
+      }
+    }
+
+    @media(max-width:560px) {
+      .ghead {
+        flex-direction: column;
+        align-items: stretch
+      }
+
+      .gbtns {
+        justify-content: flex-end
+      }
+
+      .topbar {
+        border-radius: 28px
+      }
+
+      .brand p {
+        display: none
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      * {
+        animation: none !important;
+        transition: none !important
+      }
     }
   </style>
 </head>
-<body class="antialiased selection:bg-blue-500 selection:text-white">
 
-  <!-- TOP NAVBAR -->
-  <header class="sticky top-0 z-40 w-full glass-nav">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-      
-      <!-- Brand & Status -->
-      <div class="flex items-center gap-3">
-        <button id="btnMobileSidebar" class="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Buka Pengaturan Kata Kunci">
-          <i data-lucide="menu" class="w-5 h-5"></i>
-        </button>
+<body>
+  <div class="wrap">
 
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white shrink-0">
-            <i data-lucide="radio" class="w-5 h-5 glow-pulse"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="font-display font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-blue-400 via-indigo-200 to-white bg-clip-text text-transparent">
-                News Monitor
-              </h1>
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                GitHub Pages
-              </span>
-            </div>
-            <p class="text-[11px] text-slate-400 hidden sm:block">
-              Pemantauan & Pengelompokan Berita Otomatis
-            </p>
-          </div>
+    <header class="topbar raise">
+      <div class="brand">
+        <div class="logo"><i data-lucide="radio"></i></div>
+        <div style="min-width:0">
+          <h1>News Monitor</h1>
+          <p>Pemantauan & pengelompokan berita otomatis</p>
         </div>
       </div>
-
-      <!-- Controls Right -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Last updated indicator -->
-        <div id="lastUpdatedBadge" class="hidden md:flex items-center gap-1.5 text-xs text-slate-400 bg-slate-900/80 dark:bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-xl">
-          <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
-          <span id="lastUpdatedText">Memuat data...</span>
-        </div>
-
-        <!-- Reload Data Button -->
-        <button id="btnReload" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 active:scale-95 transition-all" title="Muat ulang berita terbaru">
-          <i data-lucide="refresh-cw" id="reloadIcon" class="w-3.5 h-3.5"></i>
-          <span class="hidden sm:inline">Muat Ulang</span>
-        </button>
-
-        <!-- Admin Mode Toggle Button -->
-        <button id="btnAdminMode" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-xs font-medium text-slate-200 transition-all" title="Buka Mode Admin (Kelola Keyword via GitHub API)">
-          <i data-lucide="shield-check" id="adminIcon" class="w-3.5 h-3.5 text-indigo-400"></i>
-          <span class="hidden sm:inline" id="adminBtnText">Mode Admin</span>
-        </button>
-
-        <!-- Dark/Light Theme Toggle -->
-        <button id="btnThemeToggle" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Ganti Mode Gelap / Terang">
-          <i data-lucide="sun" id="themeIcon" class="w-4 h-4 text-amber-400"></i>
-        </button>
+      <div class="actions">
+        <span id="lastUpdatedBadge" class="tag"><i data-lucide="clock"></i><span id="lastUpdatedText">Memuat
+            data...</span></span>
+        <button id="btnReload" class="pill dark desk" title="Muat ulang berita terbaru"><span id="reloadIcon"><i
+              data-lucide="refresh-cw"></i></span>Muat ulang</button>
+        <button id="btnAdminMode" class="pill desk" title="Kelola kata kunci via GitHub API"><i
+            data-lucide="shield-check"></i><span id="adminBtnText">Mode admin</span></button>
+        <button id="btnThemeToggle" class="pill round" title="Ganti tema"><span id="themeIcon"><i
+              data-lucide="moon"></i></span></button>
       </div>
+    </header>
 
-    </div>
-  </header>
+    <div class="grid">
 
-  <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- LEFT SIDEBAR: KEYWORDS MANAGEMENT (4 COLS) -->
-      <aside id="sidebarKeywords" class="lg:col-span-4 space-y-4">
-        
-        <!-- Keyword Card Panel -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5">
-          <!-- Header -->
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div class="flex items-center gap-2">
-              <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i>
-              <h2 class="text-sm font-semibold text-slate-200">Kata Kunci Pantauan</h2>
-            </div>
-            <div class="flex items-center gap-1.5 text-xs">
-              <span id="activeKeywordsCountBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium">
-                0/0 Aktif
-              </span>
-            </div>
+      <!-- SIDEBAR -->
+      <aside id="sidebarKeywords" class="side">
+        <div class="raise card">
+          <div class="card-head">
+            <h2><i data-lucide="layers"></i>Kata kunci pantauan</h2>
+            <span id="activeKeywordsCountBadge" class="tag">0/0 aktif</span>
           </div>
 
-          <!-- Admin Mode Status Banner -->
-          <div id="adminModeBanner" class="mt-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <i data-lucide="lock" id="adminStatusIcon" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-              <span id="adminStatusText" class="text-slate-400 text-[11px] truncate">
-                Mode Publik (Baca-Saja)
-              </span>
-            </div>
-            <button id="btnConfigAdmin" class="text-[11px] text-blue-400 hover:text-blue-300 font-semibold underline shrink-0">
-              Ubah
-            </button>
+          <div class="well"
+            style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span id="adminStatusText" class="muted"
+              style="font-size:11px;font-weight:600;display:flex;gap:6px;align-items:center;min-width:0"><i
+                data-lucide="lock"></i>Mode publik (baca saja)</span>
+            <button id="btnConfigAdmin" class="linkbtn" style="color:var(--ink)">Ubah</button>
           </div>
 
-          <!-- Add Keyword Form (Enabled in Admin Mode, or shown as disabled prompt) -->
-          <form id="formAddKeyword" class="mt-4 space-y-2.5">
-            <div class="relative">
-              <input
-                type="text"
-                id="inputKeywordText"
-                placeholder="Tambah kata kunci (misal: kebakaran hutan)..."
-                maxlength="60"
-                class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-              />
-              <span id="keywordCharCounter" class="absolute right-3 top-3 text-[10px] text-slate-500">0/60</span>
+          <form id="formAddKeyword" class="stack" style="margin-top:16px">
+            <div class="field-wrap">
+              <input type="text" id="inputKeywordText" class="field" maxlength="60"
+                placeholder="Tambah kata kunci, misal: kebakaran hutan" style="padding-right:48px">
+              <span id="keywordCharCounter" class="count">0/60</span>
             </div>
-
-            <!-- Synonyms Input Toggle -->
             <div>
-              <div id="synonymToggleContainer">
-                <button type="button" id="btnToggleSynonym" class="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
-                  <i data-lucide="tag" class="w-3 h-3"></i>
-                  + Tambah sinonim (opsional)
-                </button>
-              </div>
-
-              <div id="synonymInputWrapper" class="hidden mt-1.5 space-y-1">
-                <div class="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Sinonim (pisahkan dengan koma):</span>
-                  <button type="button" id="btnCancelSynonym" class="text-slate-500 hover:text-slate-300">Batal</button>
-                </div>
-                <input
-                  type="text"
-                  id="inputKeywordSynonyms"
-                  placeholder="misal: karhutla, hutan terbakar, lahan terbakar"
-                  class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                />
+              <button type="button" id="btnToggleSynonym" class="linkbtn">+ Tambah sinonim (opsional)</button>
+              <div id="synonymInputWrapper" class="hidden stack">
+                <div class="row between"><span class="muted" style="font-size:11px">Sinonim, pisahkan dengan
+                    koma</span><button type="button" id="btnCancelSynonym" class="linkbtn">Batal</button></div>
+                <input type="text" id="inputKeywordSynonyms" class="field" placeholder="karhutla, hutan terbakar">
               </div>
             </div>
-
-            <div id="addKeywordError" class="hidden text-rose-400 text-xs py-1 flex items-center gap-1.5">
-              <i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0"></i>
-              <span id="addKeywordErrorText"></span>
-            </div>
-
-            <button
-              type="submit"
-              id="btnAddKeywordSubmit"
-              class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>Tambah Kata Kunci</span>
-            </button>
+            <div id="addKeywordError" class="err hidden"><i data-lucide="alert-circle"></i><span
+                id="addKeywordErrorText"></span></div>
+            <button type="submit" id="btnAddKeywordSubmit" class="pill dark" style="width:100%;padding:12px"><i
+                data-lucide="plus"></i>Tambah kata kunci</button>
           </form>
 
-          <!-- Keyword List Container -->
-          <div id="keywordListContainer" class="mt-4 space-y-2 overflow-y-auto max-h-[380px] pr-1">
-            <!-- Dynamically populated -->
+          <div id="keywordListContainer" class="kw-list stack" style="margin-top:16px"></div>
+
+          <div class="row" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+            <button id="btnExportJson" class="pill sm" style="flex:1" title="Unduh keywords.json"><i
+                data-lucide="download"></i>Ekspor</button>
+            <label class="pill sm" style="flex:1;cursor:pointer" title="Unggah file JSON"><i
+                data-lucide="upload"></i>Impor<input type="file" id="inputImportJson" accept=".json,application/json"
+                class="hidden"></label>
           </div>
-
-          <!-- Utility Actions (Export/Import & GitHub Info) -->
-          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2">
-            <div class="flex items-center gap-2">
-              <button id="btnExportJson" class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 text-xs font-medium transition-colors" title="Unduh data/keywords.json">
-                <i data-lucide="download" class="w-3.5 h-3.5 text-blue-400"></i>
-                <span>Ekspor JSON</span>
-              </button>
-
-              <label class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 text-xs font-medium cursor-pointer transition-colors" title="Unggah file JSON konfigurasi">
-                <i data-lucide="upload" class="w-3.5 h-3.5 text-indigo-400"></i>
-                <span>Impor JSON</span>
-                <input type="file" id="inputImportJson" accept=".json,application/json" class="hidden" />
-              </label>
-            </div>
-
-            <a href="https://github.com" target="_blank" id="linkViewRepo" class="flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 text-xs transition-colors">
-              <i data-lucide="github" class="w-3.5 h-3.5"></i>
-              <span>Buka Repositori di GitHub</span>
-            </a>
-          </div>
-
+          <a href="https://github.com" target="_blank" rel="noopener" id="linkViewRepo" class="muted"
+            style="display:flex;gap:6px;justify-content:center;align-items:center;margin-top:14px;font-size:12px;font-weight:600;text-decoration:none"><i
+              data-lucide="github"></i>Buka repositori</a>
         </div>
-
       </aside>
 
-      <!-- RIGHT MAIN CONTENT: FILTERS & GROUPED NEWS (8 COLS) -->
-      <section class="lg:col-span-8 space-y-4">
-        
-        <!-- Filter and Search Bar -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3.5">
-          
-          <!-- Top Row: Search Input + Sorting -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <!-- Live Search -->
-            <div class="relative flex-1">
-              <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3 pointer-events-none"></i>
-              <input
-                type="text"
-                id="inputSearchText"
-                placeholder="Cari isu kejadian, nama lokasi, atau judul berita..."
-                class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-9 py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
-              />
-              <button id="btnClearSearch" class="hidden absolute right-3 top-2.5 text-slate-500 hover:text-slate-300">
-                <i data-lucide="x" class="w-4 h-4"></i>
-              </button>
-            </div>
+      <!-- MAIN -->
+      <section id="mainSection" class="stack" style="min-width:0">
 
-            <!-- Group Sort Select -->
-            <div class="flex items-center gap-1 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 shrink-0">
-              <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-slate-400"></i>
-              <select id="selectSortGroups" class="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer">
-                <option value="latest" class="bg-slate-900">Urut: Berita Terbaru</option>
-                <option value="count" class="bg-slate-900">Urut: Berita Terbanyak</option>
-              </select>
+        <div class="raise filters">
+          <div class="row">
+            <div class="field-wrap" style="flex:1;min-width:200px">
+              <i data-lucide="search"></i>
+              <input type="text" id="inputSearchText" class="field field-icon"
+                placeholder="Cari kejadian, lokasi, atau judul berita" style="padding-right:40px">
+              <button id="btnClearSearch" class="icon-btn hidden"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%)" aria-label="Hapus pencarian"><i
+                  data-lucide="x"></i></button>
             </div>
+            <label class="pill selwrap" style="padding:0 14px"><i data-lucide="arrow-up-down"></i>
+              <select id="selectSortGroups">
+                <option value="latest">Berita terbaru</option>
+                <option value="count">Berita terbanyak</option>
+              </select>
+            </label>
           </div>
 
-          <!-- Middle Row: Action Toggles -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/60 text-xs">
-            <div class="flex items-center flex-wrap gap-2">
-              <!-- Item Chronological Order Toggle -->
-              <button id="btnToggleChronological" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-300 transition-colors" title="Ubah urutan isi berita dalam grup">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-400"></i>
-                <span id="chronologicalText">Terbaru Dulu</span>
-              </button>
-
-              <!-- Expand/Collapse All -->
-              <button id="btnToggleExpandAll" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-300 transition-colors">
-                <i data-lucide="chevrons-up-down" id="expandIcon" class="w-3.5 h-3.5 text-slate-400"></i>
-                <span id="expandAllText">Buka Semua</span>
-              </button>
-
-              <!-- Time Window Filter -->
-              <div class="flex items-center bg-slate-950/60 border border-slate-800 rounded-xl p-0.5 text-[11px]">
-                <button class="filter-window-btn px-2 py-1 rounded-lg transition-colors font-medium text-slate-400" data-days="1">1 Hari</button>
-                <button class="filter-window-btn px-2 py-1 rounded-lg transition-colors font-medium text-slate-400" data-days="3">3 Hari</button>
-                <button class="filter-window-btn px-2 py-1 rounded-lg transition-colors font-medium bg-blue-600 text-white" data-days="7">7 Hari (Semua)</button>
+          <div class="row between">
+            <div class="row">
+              <button id="btnToggleChronological" class="pill sm" title="Urutan isi grup"><i
+                  data-lucide="calendar"></i><span id="chronologicalText">Terbaru dulu</span></button>
+              <button id="btnToggleExpandAll" class="pill sm"><i data-lucide="chevrons-up-down"></i><span
+                  id="expandAllText">Buka semua</span></button>
+              <div class="seg" id="windowSeg">
+                <button class="filter-window-btn" data-days="1">1 hari</button>
+                <button class="filter-window-btn" data-days="3">3 hari</button>
+                <button class="filter-window-btn on" data-days="7">7 hari</button>
               </div>
             </div>
-
-            <!-- Mark all as read -->
-            <button id="btnMarkAllRead" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-xs transition-colors">
-              <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
-              <span>Tandai Semua Dibaca</span>
-            </button>
+            <div class="row">
+              <button id="btnCopyAll" class="pill sm dark" title="Salin semua link dari grup yang tampil"><i
+                  data-lucide="copy"></i>Salin semua link</button>
+              <button id="btnMarkAllRead" class="pill sm"><i data-lucide="check-check"></i>Tandai dibaca</button>
+            </div>
           </div>
 
-          <!-- Bottom Row: Keyword Filter Chips -->
-          <div id="keywordChipsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            <!-- Dynamically populated -->
-          </div>
-
+          <div id="keywordChipsContainer" class="chips"></div>
         </div>
 
-        <!-- Groups Count & Stats Banner -->
-        <div class="flex items-center justify-between text-xs text-slate-400 px-1">
-          <div class="flex items-center gap-2">
-            <span>Menampilkan <strong id="displayedGroupsCount" class="text-white">0</strong> grup kejadian</span>
-            <span class="text-slate-600">•</span>
-            <span><strong id="displayedArticlesCount" class="text-white">0</strong> artikel berita</span>
-          </div>
-          <div id="unreadBanner" class="hidden items-center gap-1.5 text-emerald-400 text-xs font-medium">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="unreadBannerText">0 Berita Baru</span>
-          </div>
+        <div class="stats">
+          <span><strong id="displayedGroupsCount">0</strong> grup kejadian &nbsp;&bull;&nbsp; <strong
+              id="displayedArticlesCount">0</strong> artikel</span>
+          <span id="unreadBanner" class="tag red hidden"><span id="unreadBannerText">0 baru</span></span>
         </div>
 
-        <!-- NEWS GROUPS LIST CONTAINER -->
-        <div id="newsGroupsList" class="space-y-3.5">
-          <!-- Dynamically Populated with NewsGroup Cards -->
+        <div id="newsGroupsList" class="groups"></div>
+
+        <div id="emptyStateContainer" class="hidden raise empty">
+          <div class="logo"><i data-lucide="inbox"></i></div>
+          <h3>Tidak ada berita yang cocok</h3>
+          <p id="emptyStateMsg">Belum ada kejadian atau berita yang sesuai dengan filter dan kata kunci saat ini.</p>
+          <button id="btnResetFilters" class="pill dark">Reset pencarian & filter</button>
         </div>
 
-        <!-- EMPTY STATE (Hidden by default) -->
-        <div id="emptyStateContainer" class="hidden glass-card rounded-2xl p-10 text-center space-y-3">
-          <div class="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto">
-            <i data-lucide="inbox" class="w-6 h-6"></i>
-          </div>
-          <h3 class="text-base font-bold text-slate-200">Tidak Ada Berita yang Cocok</h3>
-          <p id="emptyStateMsg" class="text-xs text-slate-400 max-w-md mx-auto">
-            Tidak ditemukan kejadian atau berita yang sesuai dengan filter atau kata kunci saat ini.
-          </p>
-          <button id="btnResetFilters" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all">
-            Reset Pencarian & Filter
-          </button>
+        <div id="loadingSkeleton" class="groups">
+          <div class="skel"></div>
+          <div class="skel"></div>
         </div>
-
-        <!-- LOADING SKELETON (Visible when fetching) -->
-        <div id="loadingSkeleton" class="space-y-3.5">
-          <div class="glass-card rounded-2xl p-5 animate-pulse space-y-3">
-            <div class="h-4 bg-slate-800 rounded w-1/4"></div>
-            <div class="h-6 bg-slate-800 rounded w-3/4"></div>
-            <div class="h-4 bg-slate-800 rounded w-1/2"></div>
-          </div>
-          <div class="glass-card rounded-2xl p-5 animate-pulse space-y-3">
-            <div class="h-4 bg-slate-800 rounded w-1/3"></div>
-            <div class="h-6 bg-slate-800 rounded w-2/3"></div>
-            <div class="h-4 bg-slate-800 rounded w-1/2"></div>
-          </div>
-        </div>
-
       </section>
-
     </div>
-  </main>
+  </div>
 
-  <!-- ADMIN CONFIG MODAL -->
-  <div id="modalAdminConfig" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="glass-card bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-        <div class="flex items-center gap-2">
-          <i data-lucide="shield" class="w-5 h-5 text-blue-400"></i>
-          <h3 class="text-sm font-bold text-white">Konfigurasi Mode Admin</h3>
-        </div>
-        <button id="btnCloseAdminModal" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottomnav raise" aria-label="Navigasi">
+    <button class="nav-item on" id="navHome"><i data-lucide="home"></i>Berita</button>
+    <button class="nav-item" id="navTopics"><i data-lucide="compass"></i>Topik</button>
+    <button class="nav-center" id="navRead" title="Tandai semua dibaca"><i data-lucide="check-check"></i><span
+        id="navUnread" class="tag red hidden">0</span></button>
+    <button class="nav-item" id="navReload"><i data-lucide="refresh-cw"></i>Muat</button>
+    <button class="nav-item" id="navAdmin"><i data-lucide="shield-check"></i>Admin</button>
+  </nav>
+
+  <!-- ADMIN MODAL -->
+  <div id="modalAdminConfig" class="modal hidden">
+    <div class="raise">
+      <div class="card-head">
+        <h2 style="font-size:15px"><i data-lucide="shield"></i>Konfigurasi mode admin</h2>
+        <button id="btnCloseAdminModal" class="pill round" style="width:34px;height:34px" aria-label="Tutup"><i
+            data-lucide="x"></i></button>
       </div>
-
-      <p class="text-xs text-slate-300 leading-relaxed">
-        Mode admin memungkinkan Anda menambah, mengubah, atau menghapus kata kunci langsung dari halaman web ini melalui <strong>GitHub Contents API</strong> dan memicu <strong>GitHub Actions</strong>.
-      </p>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">GitHub Repository (owner/repo):</label>
-          <input
-            type="text"
-            id="inputRepoName"
-            placeholder="misal: username/NewsMonitoring"
-            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
-          />
-        </div>
-
-        <div>
-          <label class="block text-slate-300 font-medium mb-1">GitHub Personal Access Token (PAT):</label>
-          <input
-            type="password"
-            id="inputGithubToken"
-            placeholder="github_pat_... atau ghp_..."
-            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
-          />
-          <p class="text-[11px] text-slate-400 mt-1">
-            Gunakan fine-grained token dengan akses hanya ke repo ini: <em>Contents (read/write)</em> dan <em>Actions (write)</em>. Token hanya tersimpan di browser Anda (localStorage).
-          </p>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between pt-2">
-        <button id="btnClearToken" class="text-xs text-rose-400 hover:text-rose-300 underline">
-          Hapus Token
-        </button>
-        <div class="flex gap-2">
-          <button id="btnCancelAdminModal" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700">
-            Tutup
-          </button>
-          <button id="btnSaveAdminToken" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20">
-            Simpan Token
-          </button>
+      <p class="muted" style="font-size:12px;line-height:1.6">Mode admin memungkinkan Anda menambah, mengubah, atau
+        menghapus kata kunci langsung dari halaman ini lewat GitHub Contents API, lalu menjalankan GitHub Actions.</p>
+      <label for="inputRepoName">Repositori (owner/repo)</label>
+      <input type="text" id="inputRepoName" class="field" placeholder="username/NewsMonitoring">
+      <label for="inputGithubToken">Personal Access Token</label>
+      <input type="password" id="inputGithubToken" class="field" placeholder="github_pat_... atau ghp_...">
+      <p class="hint">Gunakan fine-grained token khusus repo ini dengan izin Contents (read/write) dan Actions (write).
+        Token hanya disimpan di browser Anda.</p>
+      <div class="row between" style="margin-top:20px">
+        <button id="btnClearToken" class="linkbtn" style="color:var(--red)">Hapus token</button>
+        <div class="row">
+          <button id="btnCancelAdminModal" class="pill">Tutup</button>
+          <button id="btnSaveAdminToken" class="pill dark">Simpan token</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+  <div id="toastContainer"></div>
 
-  <!-- MAIN SCRIPT -->
   <script>
-    /**
-     * News Monitor - Client Engine
-     */
+    const KEYS = { SEEN: 'newsmonitor_seen_links', TOKEN: 'newsmonitor_gh_token', REPO: 'newsmonitor_gh_repo', THEME: 'newsmonitor_theme' };
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const icons = () => window.lucide && lucide.createIcons();
+    const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { } };
+    const lsDel = k => { try { localStorage.removeItem(k); } catch { } };
 
-    const STORAGE_KEYS = {
-      SEEN_LINKS: 'newsmonitor_seen_links',
-      PREFS: 'newsmonitor_client_prefs',
-      GITHUB_TOKEN: 'newsmonitor_gh_token',
-      GITHUB_REPO: 'newsmonitor_gh_repo',
-    };
-
-    // State Variables
-    let rawBeritaData = null;
-    let rawKeywordsData = null;
+    let rawBeritaData = null, rawKeywordsData = null;
     let seenLinks = new Set();
-    let selectedKeywordId = null;
-    let searchQuery = '';
-    let selectedWindowDays = 7;
-    let sortBy = 'latest'; // 'latest' | 'count'
-    let itemOrder = 'newest'; // 'newest' | 'oldest'
-    let isAllExpanded = false;
-    let expandedGroups = new Set(); // tracks group IDs currently expanded
+    let selectedKeywordId = null, searchQuery = '', selectedWindowDays = 7;
+    let sortBy = 'latest', itemOrder = 'newest', isAllExpanded = false;
+    let expandedGroups = new Set(), visibleGroups = [];
 
-    // Load initial stored seen links
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.SEEN_LINKS);
-      if (stored) {
-        seenLinks = new Set(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.warn('Could not read seen links:', e);
-    }
+    try { const s = lsGet(KEYS.SEEN); if (s) seenLinks = new Set(JSON.parse(s)); } catch { }
+    const persistSeen = () => lsSet(KEYS.SEEN, JSON.stringify([...seenLinks].slice(-2500)));
 
-    // Save seen links
-    function persistSeenLinks() {
-      try {
-        const arr = Array.from(seenLinks).slice(-2500);
-        localStorage.setItem(STORAGE_KEYS.SEEN_LINKS, JSON.stringify(arr));
-      } catch (e) {
-        console.warn('Could not save seen links:', e);
-      }
-    }
-
-    // Toast helper
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
+    function showToast(msg, type = 'info') {
       const el = document.createElement('div');
-      el.className = `pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl shadow-xl border backdrop-blur-md transition-all duration-300 ${
-        type === 'success'
-          ? 'bg-emerald-950/90 text-emerald-100 border-emerald-700/50'
-          : type === 'error'
-          ? 'bg-rose-950/90 text-rose-100 border-rose-700/50'
-          : 'bg-slate-900/90 text-slate-100 border-slate-700/50'
-      }`;
-
-      el.innerHTML = `
-        <span class="text-xs font-medium">${message}</span>
-        <button class="text-slate-400 hover:text-white p-0.5 rounded">&times;</button>
-      `;
-
-      el.querySelector('button').addEventListener('click', () => el.remove());
-      container.appendChild(el);
+      el.className = 'toast ' + type;
+      el.innerHTML = `<span>${esc(msg)}</span><button aria-label="Tutup">&times;</button>`;
+      el.querySelector('button').onclick = () => el.remove();
+      $('toastContainer').appendChild(el);
       setTimeout(() => el.remove(), 4000);
     }
 
-    // Format relative time in Indonesian
-    function formatRelativeTime(isoString) {
-      if (!isoString) return '';
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) return '';
-
-      const now = new Date();
-      const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
-      const diffMin = Math.floor(diffSec / 60);
-      const diffHour = Math.floor(diffMin / 60);
-      const diffDay = Math.floor(diffHour / 24);
-
-      if (diffSec < 60) return 'Baru saja';
-      if (diffMin < 60) return `${diffMin} mnt lalu`;
-      if (diffHour < 24) return `${diffHour} jam lalu`;
-      if (diffDay === 1) return 'Kemarin';
-      if (diffDay < 7) return `${diffDay} hari lalu`;
-
-      return new Intl.DateTimeFormat('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date);
+    function relTime(iso) {
+      const d = new Date(iso); if (!iso || isNaN(d)) return '';
+      const s = Math.floor((Date.now() - d) / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60), day = Math.floor(h / 24);
+      if (s < 60) return 'Baru saja';
+      if (m < 60) return `${m} mnt lalu`;
+      if (h < 24) return `${h} jam lalu`;
+      if (day === 1) return 'Kemarin';
+      if (day < 7) return `${day} hari lalu`;
+      return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(d);
+    }
+    function fullDate(iso) {
+      const d = new Date(iso); if (!iso || isNaN(d)) return '';
+      return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(d);
     }
 
-    function formatFullDate(isoString) {
-      if (!isoString) return '';
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) return '';
-      return new Intl.DateTimeFormat('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date);
-    }
-
-    // Fetch berita.json and keywords.json
-    async function loadData() {
-      const reloadIcon = document.getElementById('reloadIcon');
-      if (reloadIcon) reloadIcon.classList.add('animate-spin');
-
+    /* ---------- Clipboard ---------- */
+    async function copyText(text, okMsg) {
       try {
-        const cacheBuster = `?t=${Date.now()}`;
-        
-        // Fetch in parallel
-        const [beritaRes, keywordsRes] = await Promise.all([
-          fetch(`data/berita.json${cacheBuster}`),
-          fetch(`data/keywords.json${cacheBuster}`)
-        ]);
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        let ok = false; try { ok = document.execCommand('copy'); } catch { }
+        ta.remove();
+        if (!ok) return showToast('Gagal menyalin. Izinkan akses clipboard di browser.', 'error');
+      }
+      showToast(okMsg, 'success');
+    }
+    const sortedItems = g => [...g.items].sort((a, b) => {
+      const d = new Date(b.publishedAt) - new Date(a.publishedAt);
+      return itemOrder === 'newest' ? d : -d;
+    });
+    const groupLinks = g => [...new Set(sortedItems(g).map(i => i.link).filter(Boolean))];
 
-        if (beritaRes.ok) {
-          rawBeritaData = await beritaRes.json();
-        } else {
-          console.warn('berita.json not ready yet');
-        }
+    function copyGroupLinks(id) {
+      const g = (rawBeritaData?.groups || []).find(x => x.id === id); if (!g) return;
+      const links = groupLinks(g);
+      copyText(links.join('\n'), `${links.length} link disalin`);
+    }
+    function copyAllVisible() {
+      if (!visibleGroups.length) return showToast('Tidak ada grup untuk disalin.', 'info');
+      let total = 0;
+      const text = visibleGroups.map(g => {
+        const links = groupLinks(g); total += links.length;
+        return `${g.title}${g.location ? ' (' + g.location + ')' : ''}\n${links.join('\n')}`;
+      }).join('\n\n');
+      copyText(text, `${total} link dari ${visibleGroups.length} grup disalin`);
+    }
 
-        if (keywordsRes.ok) {
-          rawKeywordsData = await keywordsRes.json();
-        }
-
+    /* ---------- Data ---------- */
+    async function loadData() {
+      $('reloadIcon').style.animation = 'spin 1s linear infinite';
+      try {
+        const t = `?t=${Date.now()}`;
+        const [b, k] = await Promise.all([fetch(`data/berita.json${t}`), fetch(`data/keywords.json${t}`)]);
+        if (b.ok) rawBeritaData = await b.json(); else console.warn('berita.json belum tersedia');
+        if (k.ok) rawKeywordsData = await k.json();
         renderAll();
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        showToast('Gagal memuat berita terbaru', 'error');
+      } catch (e) {
+        console.error(e); showToast('Gagal memuat berita terbaru', 'error');
       } finally {
-        if (reloadIcon) reloadIcon.classList.remove('animate-spin');
-        const skeleton = document.getElementById('loadingSkeleton');
-        if (skeleton) skeleton.classList.add('hidden');
+        $('reloadIcon').style.animation = '';
+        $('loadingSkeleton').classList.add('hidden');
       }
     }
 
-    // Render Everything
     function renderAll() {
-      renderLastUpdated();
-      renderKeywordsList();
-      renderKeywordChips();
-      renderNewsGroups();
-      updateAdminUI();
-      lucide.createIcons();
+      renderLastUpdated(); renderKeywordsList(); renderKeywordChips(); renderNewsGroups(); updateAdminUI(); icons();
     }
-
-    // Render Last Updated
     function renderLastUpdated() {
-      const textEl = document.getElementById('lastUpdatedText');
-      if (rawBeritaData && rawBeritaData.generatedAt) {
-        textEl.textContent = `Pembaruan: ${formatRelativeTime(rawBeritaData.generatedAt)}`;
-        textEl.title = formatFullDate(rawBeritaData.generatedAt);
-      } else {
-        textEl.textContent = 'Belum ada data scraper';
-      }
+      const el = $('lastUpdatedText');
+      if (rawBeritaData?.generatedAt) { el.textContent = `Diperbarui ${relTime(rawBeritaData.generatedAt)}`; el.title = fullDate(rawBeritaData.generatedAt); }
+      else el.textContent = 'Belum ada data scraper';
+    }
+    function groupCounts() {
+      const c = {}; (rawBeritaData?.groups || []).forEach(g => c[g.keywordId] = (c[g.keywordId] || 0) + 1); return c;
     }
 
-    // Count how many groups each keyword generated
-    function getGroupCountsMap() {
-      const counts = {};
-      if (rawBeritaData && Array.isArray(rawBeritaData.groups)) {
-        for (const g of rawBeritaData.groups) {
-          counts[g.keywordId] = (counts[g.keywordId] || 0) + 1;
-        }
-      }
-      return counts;
-    }
-
-    // Render Keywords List in Left Panel
     function renderKeywordsList() {
-      const container = document.getElementById('keywordListContainer');
-      const badgeEl = document.getElementById('activeKeywordsCountBadge');
-      if (!container || !rawKeywordsData) return;
-
-      const keywords = rawKeywordsData.keywords || [];
-      const activeCount = keywords.filter(k => k.active).length;
-      if (badgeEl) badgeEl.textContent = `${activeCount}/${keywords.length} Aktif`;
-
-      const groupCounts = getGroupCountsMap();
-      const hasToken = Boolean(localStorage.getItem(STORAGE_KEYS.GITHUB_TOKEN));
-
-      if (keywords.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-8 px-3 rounded-xl border border-dashed border-slate-800 text-slate-500 text-xs">
-            Belum ada kata kunci yang tersimpan.
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = keywords.map(kw => {
-        const count = groupCounts[kw.id] || 0;
-        const synPills = (kw.synonyms && kw.synonyms.length > 0)
-          ? `<div class="mt-2 flex flex-wrap gap-1">
-              ${kw.synonyms.map(s => `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-900 border border-slate-800 text-slate-400">=${s}</span>`).join('')}
-             </div>`
-          : '';
-
-        return `
-          <div class="p-3 rounded-xl border transition-all ${kw.active ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-950/30 border-slate-900 opacity-60'}">
-            <div class="flex items-center justify-between gap-2">
-              
-              <!-- Left: Toggle & Name -->
-              <div class="flex items-center gap-2.5 min-w-0">
-                <button
-                  type="button"
-                  onclick="toggleKeywordActive('${kw.id}')"
-                  class="w-7 h-4 rounded-full transition-colors relative shrink-0 ${kw.active ? 'bg-blue-600' : 'bg-slate-800'} ${!hasToken ? 'opacity-80 cursor-default' : ''}"
-                  title="${hasToken ? (kw.active ? 'Nonaktifkan' : 'Aktifkan') : 'Perlu mode admin untuk mengubah'}"
-                >
-                  <div class="w-3 h-3 rounded-full bg-white transition-transform absolute top-0.5 ${kw.active ? 'left-3.5' : 'left-0.5'}"></div>
-                </button>
-                <span class="text-xs font-medium text-slate-200 truncate">${kw.text}</span>
-              </div>
-
-              <!-- Right: Group Count & Admin buttons -->
-              <div class="flex items-center gap-1 shrink-0">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  ${count} grup
-                </span>
-
-                ${hasToken ? `
-                  <button onclick="promptEditKeyword('${kw.id}')" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Ubah keyword">
-                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <button onclick="deleteKeyword('${kw.id}')" class="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors" title="Hapus keyword">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                ` : ''}
-              </div>
-
-            </div>
-            ${synPills}
-          </div>
-        `;
-      }).join('');
+      const box = $('keywordListContainer'); if (!box || !rawKeywordsData) return;
+      const kws = rawKeywordsData.keywords || [];
+      $('activeKeywordsCountBadge').textContent = `${kws.filter(k => k.active).length}/${kws.length} aktif`;
+      const counts = groupCounts(), admin = !!lsGet(KEYS.TOKEN);
+      if (!kws.length) { box.innerHTML = '<p class="muted" style="text-align:center;font-size:12px;padding:20px 0">Belum ada kata kunci tersimpan.</p>'; return; }
+      box.innerHTML = kws.map(k => `
+    <div class="kw ${k.active ? '' : 'off'}">
+      <div class="kw-row">
+        <div class="kw-name">
+          <button type="button" class="sw ${k.active ? 'on' : ''}" data-act="toggleKw" data-id="${esc(k.id)}" role="switch" aria-checked="${!!k.active}" title="${admin ? (k.active ? 'Nonaktifkan' : 'Aktifkan') : 'Perlu mode admin'}"></button>
+          <span>${esc(k.text)}</span>
+        </div>
+        <div class="row" style="gap:2px;flex:none">
+          <span class="tag">${counts[k.id] || 0} grup</span>
+          ${admin ? `<button class="icon-btn" data-act="editKw" data-id="${esc(k.id)}" title="Ubah"><i data-lucide="pencil"></i></button>
+          <button class="icon-btn" data-act="delKw" data-id="${esc(k.id)}" title="Hapus"><i data-lucide="trash-2"></i></button>` : ''}
+        </div>
+      </div>
+      ${k.synonyms?.length ? `<div class="syns">${k.synonyms.map(s => `<span class="tag">=${esc(s)}</span>`).join('')}</div>` : ''}
+    </div>`).join('');
     }
 
-    // Render Keyword Filter Chips in FilterBar
     function renderKeywordChips() {
-      const container = document.getElementById('keywordChipsContainer');
-      if (!container || !rawKeywordsData) return;
-
-      const keywords = (rawKeywordsData.keywords || []).filter(k => k.active);
-
-      let html = `
-        <button
-          onclick="filterByKeyword(null)"
-          class="px-3 py-1 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${selectedKeywordId === null ? 'bg-blue-600 text-white shadow-sm font-semibold' : 'bg-slate-950/80 text-slate-400 hover:text-slate-200 border border-slate-800'}"
-        >
-          Semua Topik
-        </button>
-      `;
-
-      html += keywords.map(kw => {
-        const isSel = selectedKeywordId === kw.id;
-        return `
-          <button
-            onclick="filterByKeyword('${kw.id}')"
-            class="px-3 py-1 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${isSel ? 'bg-blue-600 text-white shadow-sm font-semibold' : 'bg-slate-950/80 text-slate-400 hover:text-slate-200 border border-slate-800'}"
-          >
-            ${kw.text}
-          </button>
-        `;
-      }).join('');
-
-      container.innerHTML = html;
+      const box = $('keywordChipsContainer'); if (!box || !rawKeywordsData) return;
+      const kws = (rawKeywordsData.keywords || []).filter(k => k.active);
+      box.innerHTML = `<button class="pill sm ${selectedKeywordId === null ? 'dark' : ''}" data-act="filterKw" data-id="">Semua topik</button>` +
+        kws.map(k => `<button class="pill sm ${selectedKeywordId === k.id ? 'dark' : ''}" data-act="filterKw" data-id="${esc(k.id)}">${esc(k.text)}</button>`).join('');
     }
 
-    // Render News Groups
     function renderNewsGroups() {
-      const container = document.getElementById('newsGroupsList');
-      const emptyEl = document.getElementById('emptyStateContainer');
-      const countEl = document.getElementById('displayedGroupsCount');
-      const artCountEl = document.getElementById('displayedArticlesCount');
-      const unreadBanner = document.getElementById('unreadBanner');
-      const unreadText = document.getElementById('unreadBannerText');
-
-      if (!container || !rawBeritaData) return;
-
-      let groups = rawBeritaData.groups || [];
-
-      // Filter by Keyword
-      if (selectedKeywordId) {
-        groups = groups.filter(g => g.keywordId === selectedKeywordId);
-      }
-
-      // Filter by Search Query
+      const box = $('newsGroupsList'), empty = $('emptyStateContainer'); if (!box || !rawBeritaData) return;
+      let groups = [...(rawBeritaData.groups || [])];
+      if (selectedKeywordId) groups = groups.filter(g => g.keywordId === selectedKeywordId);
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        groups = groups.filter(g => {
-          if (g.title.toLowerCase().includes(q)) return true;
-          if (g.location && g.location.toLowerCase().includes(q)) return true;
-          return g.items && g.items.some(item => item.title.toLowerCase().includes(q) || item.source.toLowerCase().includes(q));
-        });
+        groups = groups.filter(g => g.title.toLowerCase().includes(q) || g.location?.toLowerCase().includes(q) ||
+          g.items?.some(i => i.title.toLowerCase().includes(q) || i.source?.toLowerCase().includes(q)));
       }
-
-      // Filter by Window Days (1d, 3d, 7d)
       if (selectedWindowDays < 7) {
-        const cutoff = Date.now() - (selectedWindowDays * 24 * 60 * 60 * 1000);
-        groups = groups.filter(g => new Date(g.latest).getTime() >= cutoff);
+        const cut = Date.now() - selectedWindowDays * 864e5;
+        groups = groups.filter(g => new Date(g.latest).getTime() >= cut);
       }
+      groups.sort(sortBy === 'count' ? (a, b) => b.count - a.count : (a, b) => new Date(b.latest) - new Date(a.latest));
+      visibleGroups = groups;
 
-      // Sort Groups
-      if (sortBy === 'count') {
-        groups.sort((a, b) => b.count - a.count);
-      } else {
-        groups.sort((a, b) => new Date(b.latest).getTime() - new Date(a.latest).getTime());
-      }
+      let articles = 0, unread = 0;
+      groups.forEach(g => { articles += g.count; g.items.forEach(i => { if (!seenLinks.has(i.link)) unread++; }); });
+      $('displayedGroupsCount').textContent = groups.length;
+      $('displayedArticlesCount').textContent = articles;
+      $('unreadBanner').classList.toggle('hidden', !unread);
+      $('unreadBannerText').textContent = `${unread} berita baru`;
+      const nb = $('navUnread'); nb.classList.toggle('hidden', !unread); nb.textContent = unread > 99 ? '99+' : unread;
 
-      // Count unread
-      let totalArticles = 0;
-      let totalUnread = 0;
+      if (!groups.length) { box.innerHTML = ''; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
 
-      for (const g of groups) {
-        totalArticles += g.count;
-        for (const it of g.items) {
-          if (!seenLinks.has(it.link)) {
-            totalUnread++;
-          }
-        }
-      }
-
-      if (countEl) countEl.textContent = groups.length;
-      if (artCountEl) artCountEl.textContent = totalArticles;
-
-      if (totalUnread > 0) {
-        unreadBanner.classList.remove('hidden');
-        unreadBanner.classList.add('flex');
-        unreadText.textContent = `${totalUnread} Berita Baru Belum Dibaca`;
-      } else {
-        unreadBanner.classList.add('hidden');
-        unreadBanner.classList.remove('flex');
-      }
-
-      if (groups.length === 0) {
-        container.innerHTML = '';
-        emptyEl.classList.remove('hidden');
-        return;
-      }
-
-      emptyEl.classList.add('hidden');
-
-      // Build HTML
-      container.innerHTML = groups.map(grp => {
-        const isExp = isAllExpanded || expandedGroups.has(grp.id);
-        const unreadInGroup = grp.items.filter(it => !seenLinks.has(it.link)).length;
-        const hasNew = unreadInGroup > 0;
-
-        // Sort items inside group
-        const items = [...grp.items].sort((a, b) => {
-          const tA = new Date(a.publishedAt).getTime();
-          const tB = new Date(b.publishedAt).getTime();
-          return itemOrder === 'newest' ? tB - tA : tA - tB;
-        });
-
-        // Collect distinct sources
-        const distinctSources = new Set();
-        for (const item of items) {
-          if (item.source) distinctSources.add(item.source);
-          if (Array.isArray(item.alsoIn)) item.alsoIn.forEach(s => distinctSources.add(s));
-        }
+      box.innerHTML = groups.map(g => {
+        const exp = isAllExpanded || expandedGroups.has(g.id);
+        const newCount = g.items.filter(i => !seenLinks.has(i.link)).length;
+        const items = sortedItems(g);
+        const sources = new Set();
+        items.forEach(i => { if (i.source) sources.add(i.source); (i.alsoIn || []).forEach(s => sources.add(s)); });
+        const linkCount = groupLinks(g).length;
 
         return `
-          <div class="rounded-2xl border transition-all duration-200 overflow-hidden ${hasNew ? 'border-blue-500/30 bg-slate-900/80 shadow-lg shadow-blue-500/5' : 'border-slate-800/80 bg-slate-900/50 hover:border-slate-700/80'}">
-            
-            <!-- Accordion Header -->
-            <div
-              onclick="toggleGroupExpand('${grp.id}')"
-              class="p-4 sm:p-5 cursor-pointer select-none hover:bg-slate-800/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
-            >
-              <div class="space-y-1.5 flex-1 min-w-0">
-                <div class="flex items-center flex-wrap gap-2 text-xs">
-                  ${grp.location ? `
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
-                      <i data-lucide="map-pin" class="w-3 h-3 text-indigo-400"></i>
-                      ${grp.location}
-                    </span>
-                  ` : `
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 font-medium text-[11px]">
-                      Umum & Terkait
-                    </span>
-                  `}
-
-                  ${hasNew ? `
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      ${unreadInGroup} Baru
-                    </span>
-                  ` : ''}
-                </div>
-
-                <h3 class="text-base sm:text-lg font-bold text-slate-100 hover:text-blue-300 transition-colors line-clamp-1">
-                  ${grp.title}
-                </h3>
-
-                <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
-                  <span class="inline-flex items-center gap-1">
-                    <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-400"></i>
-                    <strong class="text-slate-200">${grp.count}</strong> Berita
-                  </span>
-                  <span class="inline-flex items-center gap-1">
-                    <i data-lucide="newspaper" class="w-3.5 h-3.5 text-indigo-400"></i>
-                    <strong class="text-slate-200">${grp.sources}</strong> Media
-                  </span>
-                  <span class="inline-flex items-center gap-1">
-                    <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
-                    Terbaru ${formatRelativeTime(grp.latest)}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Chevron -->
-              <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
-                <div class="w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${isExp ? 'bg-blue-600/10 border-blue-500/30 text-blue-400' : 'bg-slate-800/60 border-slate-700/60 text-slate-400'}">
-                  <i data-lucide="${isExp ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Accordion Content -->
-            ${isExp ? `
-              <div class="border-t border-slate-800/80 bg-slate-950/50 p-4 sm:p-5 space-y-3.5">
-                
-                <!-- Media Sources Tags -->
-                <div class="flex items-center gap-2 flex-wrap pb-2 border-b border-slate-800/60 text-xs">
-                  <span class="text-[11px] text-slate-400 font-medium">Liputan Media:</span>
-                  ${Array.from(distinctSources).map(s => `
-                    <span class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[11px] text-slate-300">${s}</span>
-                  `).join('')}
-                </div>
-
-                <!-- Articles List -->
-                <div class="space-y-2.5">
-                  ${items.map(item => {
-                    const isUnread = !seenLinks.has(item.link);
-                    const alsoInTags = (item.alsoIn && item.alsoIn.length > 0)
-                      ? item.alsoIn.map(s => `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">+${s}</span>`).join(' ')
-                      : '';
-
-                    return `
-                      <div class="p-3 sm:p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 ${isUnread ? 'bg-slate-900/90 border-blue-500/30' : 'bg-slate-900/40 border-slate-800/80'}">
-                        <div class="space-y-1.5 flex-1 min-w-0">
-                          <div class="flex items-center flex-wrap gap-2 text-xs">
-                            ${isUnread ? `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Berita Baru"></span>` : ''}
-                            <span class="font-semibold text-blue-400 text-xs bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                              ${item.source}
-                            </span>
-                            ${alsoInTags}
-                            <span class="text-slate-400 text-[11px]" title="${formatFullDate(item.publishedAt)}">
-                              ${formatRelativeTime(item.publishedAt)}
-                            </span>
-                          </div>
-
-                          <a
-                            href="${item.link}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onclick="markItemAsRead('${item.link.replace(/'/g, "\\'")}')"
-                            class="block font-medium text-xs sm:text-sm leading-snug hover:underline transition-colors ${isUnread ? 'text-white font-semibold' : 'text-slate-300 hover:text-white'}"
-                          >
-                            ${item.title}
-                          </a>
-                        </div>
-
-                        <a
-                          href="${item.link}"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onclick="markItemAsRead('${item.link.replace(/'/g, "\\'")}')"
-                          class="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-slate-800 transition-colors shrink-0"
-                          title="Buka berita di tab baru"
-                        >
-                          <i data-lucide="external-link" class="w-4 h-4"></i>
-                        </a>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-
-              </div>
-            ` : ''}
-
+    <article class="raise group ${newCount ? 'fresh' : ''}">
+      <div class="well ghead" data-act="toggleGroup" data-id="${esc(g.id)}">
+        <div class="gmain">
+          <div class="gtags">
+            ${g.location ? `<span class="tag" style="color:var(--ink)"><i data-lucide="map-pin"></i>${esc(g.location)}</span>` : `<span class="tag">Umum & terkait</span>`}
+            ${newCount ? `<span class="tag red">${newCount} baru</span>` : ''}
           </div>
-        `;
+          <h3 class="gtitle">${esc(g.title)}</h3>
+          <div class="gmeta">
+            <span><i data-lucide="layers"></i><b>${g.count}</b> berita</span>
+            <span><i data-lucide="newspaper"></i><b>${g.sources}</b> media</span>
+            <span><i data-lucide="clock"></i>${relTime(g.latest)}</span>
+          </div>
+        </div>
+        <div class="gbtns">
+          <button class="pill sm" data-act="copyGroup" data-id="${esc(g.id)}" title="Salin ${linkCount} link grup ini"><i data-lucide="copy"></i>Salin link</button>
+          <span class="pill round" aria-hidden="true" style="width:42px;height:42px"><i data-lucide="${exp ? 'minus' : 'plus'}"></i></span>
+        </div>
+      </div>
+      ${exp ? `
+      <div class="gbody">
+        <div class="gtools">
+          <div class="media"><span>Liputan:</span>${[...sources].map(s => `<span class="tag">${esc(s)}</span>`).join('')}</div>
+          <button class="pill sm dark" data-act="copyGroup" data-id="${esc(g.id)}"><i data-lucide="copy"></i>Salin ${linkCount} link</button>
+        </div>
+        ${items.map(it => {
+          const un = !seenLinks.has(it.link);
+          return `
+          <div class="art ${un ? 'unread' : ''}">
+            <div class="art-main">
+              <div class="art-top">
+                ${un ? '<span class="dot" title="Belum dibaca"></span>' : ''}
+                <span class="tag" style="color:var(--ink)">${esc(it.source)}</span>
+                ${(it.alsoIn || []).map(s => `<span class="tag">+${esc(s)}</span>`).join('')}
+                <span title="${esc(fullDate(it.publishedAt))}">${relTime(it.publishedAt)}</span>
+              </div>
+              <a class="t" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer" data-act="read" data-link="${esc(it.link)}">${esc(it.title)}</a>
+            </div>
+            <a class="icon-btn" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer" data-act="read" data-link="${esc(it.link)}" title="Buka di tab baru"><i data-lucide="external-link"></i></a>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+    </article>`;
       }).join('');
     }
 
-    // Event Handlers for Filters
-    function filterByKeyword(id) {
-      selectedKeywordId = (selectedKeywordId === id) ? null : id;
-      renderKeywordChips();
-      renderNewsGroups();
-      lucide.createIcons();
-    }
+    function rerender() { renderNewsGroups(); icons(); }
 
-    function toggleGroupExpand(groupId) {
-      if (expandedGroups.has(groupId)) {
-        expandedGroups.delete(groupId);
-      } else {
-        expandedGroups.add(groupId);
-      }
-      renderNewsGroups();
-      lucide.createIcons();
-    }
-
-    function markItemAsRead(link) {
-      if (!link) return;
-      seenLinks.add(link);
-      persistSeenLinks();
-      renderNewsGroups();
-      lucide.createIcons();
-    }
-
-    // Toggle Admin Mode UI
+    /* ---------- Admin ---------- */
     function updateAdminUI() {
-      const token = localStorage.getItem(STORAGE_KEYS.GITHUB_TOKEN);
-      const repo = localStorage.getItem(STORAGE_KEYS.GITHUB_REPO);
-      const bannerText = document.getElementById('adminStatusText');
-      const bannerIcon = document.getElementById('adminStatusIcon');
-      const btnAdminMode = document.getElementById('btnAdminMode');
-      const adminBtnText = document.getElementById('adminBtnText');
-
-      if (token && repo) {
-        bannerText.textContent = `Mode Admin Aktif (${repo})`;
-        bannerText.className = 'text-emerald-400 text-[11px] truncate font-semibold';
-        bannerIcon.setAttribute('data-lucide', 'shield-check');
-        bannerIcon.className = 'w-3.5 h-3.5 text-emerald-400 shrink-0';
-        adminBtnText.textContent = 'Admin Aktif';
-        btnAdminMode.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-xs font-medium text-emerald-300 transition-all';
-      } else {
-        bannerText.textContent = 'Mode Publik (Baca-Saja)';
-        bannerText.className = 'text-slate-400 text-[11px] truncate';
-        bannerIcon.setAttribute('data-lucide', 'lock');
-        bannerIcon.className = 'w-3.5 h-3.5 text-slate-400 shrink-0';
-        adminBtnText.textContent = 'Mode Admin';
-        btnAdminMode.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-xs font-medium text-slate-200 transition-all';
-      }
+      const on = lsGet(KEYS.TOKEN) && lsGet(KEYS.REPO);
+      $('adminStatusText').innerHTML = on
+        ? `<i data-lucide="shield-check" style="color:var(--ok)"></i><span style="color:var(--ok);overflow:hidden;text-overflow:ellipsis">Admin aktif (${esc(lsGet(KEYS.REPO))})</span>`
+        : `<i data-lucide="lock"></i>Mode publik (baca saja)`;
+      $('adminBtnText').textContent = on ? 'Admin aktif' : 'Mode admin';
+      $('btnAdminMode').classList.toggle('on', !!on);
+      const repo = lsGet(KEYS.REPO); if (repo) $('linkViewRepo').href = `https://github.com/${repo}`;
     }
 
-    // GitHub API: Update data/keywords.json and dispatch workflow
-    async function updateKeywordsOnGitHub(newKeywordsList, commitMessage = 'Update keywords via web UI') {
-      const token = localStorage.getItem(STORAGE_KEYS.GITHUB_TOKEN);
-      const repo = localStorage.getItem(STORAGE_KEYS.GITHUB_REPO);
-
-      if (!token || !repo) {
-        showToast('Aktifkan Mode Admin dengan Token GitHub terlebih dahulu.', 'error');
-        document.getElementById('modalAdminConfig').classList.remove('hidden');
-        return false;
-      }
-
-      showToast('Menyimpan perubahan ke GitHub...', 'info');
-
+    async function updateKeywordsOnGitHub(list, msg = 'Update keywords via web UI') {
+      const token = lsGet(KEYS.TOKEN), repo = lsGet(KEYS.REPO);
+      if (!token || !repo) { showToast('Aktifkan mode admin dengan token GitHub terlebih dahulu.', 'error'); openAdminModal(); return false; }
+      showToast('Menyimpan perubahan ke GitHub...');
+      const url = `https://api.github.com/repos/${repo}/contents/data/keywords.json`;
+      const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' };
       try {
-        // 1. Get current keywords.json file SHA
-        const getUrl = `https://api.github.com/repos/${repo}/contents/data/keywords.json`;
-        const getRes = await fetch(getUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-          }
-        });
-
-        if (!getRes.ok) {
-          throw new Error(`Gagal mengambil data dari GitHub: ${getRes.status} ${getRes.statusText}`);
-        }
-
-        const getData = await getRes.json();
-        const currentSha = getData.sha;
-
-        // Construct new file content
-        const payload = {
-          settings: rawKeywordsData?.settings || { windowDays: 7, maxDerivedPerKeyword: 8 },
-          keywords: newKeywordsList,
-        };
-
-        const jsonString = JSON.stringify(payload, null, 2);
-        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
-
-        // 2. PUT updated keywords.json
-        const putRes = await fetch(getUrl, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: commitMessage,
-            content: encodedContent,
-            sha: currentSha,
-          })
-        });
-
-        if (!putRes.ok) {
-          const errData = await putRes.json();
-          throw new Error(`Gagal commit ke GitHub: ${errData.message || putRes.statusText}`);
-        }
-
-        // 3. Dispatch scrape.yml workflow
-        showToast('Memicu scraper GitHub Actions...', 'info');
-        const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/scrape.yml/dispatches`;
-        await fetch(dispatchUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ref: 'main' }),
-        }).catch(err => console.warn('Could not dispatch workflow:', err));
-
-        // Update local memory and re-render
-        rawKeywordsData.keywords = newKeywordsList;
+        const get = await fetch(url, { headers });
+        if (!get.ok) throw new Error(`Gagal mengambil data dari GitHub: ${get.status} ${get.statusText}`);
+        const { sha } = await get.json();
+        const payload = { settings: rawKeywordsData?.settings || { windowDays: 7, maxDerivedPerKeyword: 8 }, keywords: list };
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+        const put = await fetch(url, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, content, sha }) });
+        if (!put.ok) throw new Error(`Gagal commit ke GitHub: ${(await put.json()).message || put.statusText}`);
+        showToast('Memicu scraper GitHub Actions...');
+        await fetch(`https://api.github.com/repos/${repo}/actions/workflows/scrape.yml/dispatches`, {
+          method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: 'main' })
+        }).catch(e => console.warn('Workflow tidak terpicu:', e));
+        rawKeywordsData = { ...(rawKeywordsData || {}), keywords: list };
         renderAll();
-        showToast('Berhasil disimpan ke GitHub! Scraper sedang berjalan.', 'success');
+        showToast('Tersimpan ke GitHub. Scraper sedang berjalan.', 'success');
         return true;
-      } catch (err) {
-        console.error('GitHub API error:', err);
-        showToast(err.message, 'error');
-        return false;
-      }
+      } catch (e) { console.error(e); showToast(e.message, 'error'); return false; }
     }
-
-    // Admin Keyword Actions
-    async function toggleKeywordActive(id) {
-      if (!rawKeywordsData?.keywords) return;
-      const token = localStorage.getItem(STORAGE_KEYS.GITHUB_TOKEN);
-      if (!token) {
-        showToast('Masuk Mode Admin untuk mengaktifkan/menonaktifkan kata kunci.', 'info');
-        document.getElementById('modalAdminConfig').classList.remove('hidden');
-        return;
-      }
-
-      const updated = rawKeywordsData.keywords.map(k => k.id === id ? { ...k, active: !k.active } : k);
-      await updateKeywordsOnGitHub(updated, `Toggle status keyword ${id}`);
+    function openAdminModal() {
+      $('inputGithubToken').value = lsGet(KEYS.TOKEN) || '';
+      $('inputRepoName').value = lsGet(KEYS.REPO) || '';
+      $('modalAdminConfig').classList.remove('hidden');
     }
-
+    async function toggleKeyword(id) {
+      if (!lsGet(KEYS.TOKEN)) { showToast('Masuk mode admin untuk mengubah status kata kunci.'); return openAdminModal(); }
+      await updateKeywordsOnGitHub(rawKeywordsData.keywords.map(k => k.id === id ? { ...k, active: !k.active } : k), `Toggle keyword ${id}`);
+    }
     async function deleteKeyword(id) {
-      if (!rawKeywordsData?.keywords) return;
       const kw = rawKeywordsData.keywords.find(k => k.id === id);
       if (!confirm(`Hapus kata kunci "${kw?.text}"?`)) return;
-
-      const updated = rawKeywordsData.keywords.filter(k => k.id !== id);
-      await updateKeywordsOnGitHub(updated, `Hapus keyword ${kw?.text}`);
+      await updateKeywordsOnGitHub(rawKeywordsData.keywords.filter(k => k.id !== id), `Hapus keyword ${kw?.text}`);
+    }
+    async function editKeyword(id) {
+      const kw = rawKeywordsData.keywords.find(k => k.id === id); if (!kw) return;
+      const text = prompt('Ubah kata kunci:', kw.text); if (!text?.trim()) return;
+      if (text.trim().length > 60) return alert('Maksimal 60 karakter');
+      const syn = prompt('Ubah sinonim (pisahkan dengan koma):', (kw.synonyms || []).join(', '));
+      const synonyms = (syn || '').split(',').map(s => s.trim()).filter(Boolean);
+      await updateKeywordsOnGitHub(rawKeywordsData.keywords.map(k => k.id === id ? { ...k, text: text.trim(), synonyms } : k), `Ubah keyword ${text.trim()}`);
     }
 
-    async function promptEditKeyword(id) {
-      if (!rawKeywordsData?.keywords) return;
-      const kw = rawKeywordsData.keywords.find(k => k.id === id);
-      if (!kw) return;
-
-      const newText = prompt('Ubah kata kunci:', kw.text);
-      if (!newText || !newText.trim()) return;
-      if (newText.trim().length > 60) {
-        alert('Maksimal 60 karakter');
-        return;
-      }
-
-      const newSyn = prompt('Ubah sinonim (koma-pisahkan):', (kw.synonyms || []).join(', '));
-      const synonymsArray = (newSyn || '').split(',').map(s => s.trim()).filter(Boolean);
-
-      const updated = rawKeywordsData.keywords.map(k => k.id === id ? { ...k, text: newText.trim(), synonyms: synonymsArray } : k);
-      await updateKeywordsOnGitHub(updated, `Ubah keyword ${newText.trim()}`);
+    function markRead(link) { if (link && !seenLinks.has(link)) { seenLinks.add(link); persistSeen(); setTimeout(rerender, 150); } }
+    function markAllRead() {
+      let n = 0;
+      (rawBeritaData?.groups || []).forEach(g => g.items.forEach(i => { if (!seenLinks.has(i.link)) { seenLinks.add(i.link); n++; } }));
+      persistSeen(); rerender(); showToast(`${n} berita ditandai sudah dibaca`, 'success');
     }
 
-    // DOM Ready Setup
+    /* ---------- Events ---------- */
+    document.addEventListener('click', e => {
+      const el = e.target.closest('[data-act]'); if (!el) return;
+      const { act, id, link } = el.dataset;
+      if (act === 'toggleGroup') { expandedGroups.has(id) ? expandedGroups.delete(id) : expandedGroups.add(id); rerender(); }
+      else if (act === 'copyGroup') copyGroupLinks(id);
+      else if (act === 'read') markRead(link);
+      else if (act === 'filterKw') { selectedKeywordId = id ? (selectedKeywordId === id ? null : id) : null; renderKeywordChips(); rerender(); }
+      else if (act === 'toggleKw') toggleKeyword(id);
+      else if (act === 'editKw') editKeyword(id);
+      else if (act === 'delKw') deleteKeyword(id);
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Theme toggle
-      const btnTheme = document.getElementById('btnThemeToggle');
-      const themeIcon = document.getElementById('themeIcon');
-      btnTheme.addEventListener('click', () => {
-        const isDark = document.documentElement.classList.toggle('dark');
-        themeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-        lucide.createIcons();
+      const root = document.documentElement;
+      const setTheme = t => { root.dataset.theme = t; $('themeIcon').innerHTML = `<i data-lucide="${t === 'dark' ? 'sun' : 'moon'}"></i>`; icons(); };
+      setTheme(lsGet(KEYS.THEME) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      $('btnThemeToggle').onclick = () => { const t = root.dataset.theme === 'dark' ? 'light' : 'dark'; lsSet(KEYS.THEME, t); setTheme(t); };
+
+      const reload = () => { loadData(); showToast('Memperbarui data berita...'); };
+      $('btnReload').onclick = reload; $('navReload').onclick = reload;
+
+      const search = $('inputSearchText'), clear = $('btnClearSearch');
+      search.oninput = () => { searchQuery = search.value; clear.classList.toggle('hidden', !searchQuery); rerender(); };
+      clear.onclick = () => { search.value = ''; searchQuery = ''; clear.classList.add('hidden'); rerender(); };
+      $('selectSortGroups').onchange = e => { sortBy = e.target.value; rerender(); };
+      $('btnToggleChronological').onclick = () => { itemOrder = itemOrder === 'newest' ? 'oldest' : 'newest'; $('chronologicalText').textContent = itemOrder === 'newest' ? 'Terbaru dulu' : 'Kronologis'; rerender(); };
+      $('btnToggleExpandAll').onclick = () => { isAllExpanded = !isAllExpanded; expandedGroups.clear(); $('expandAllText').textContent = isAllExpanded ? 'Tutup semua' : 'Buka semua'; rerender(); };
+      document.querySelectorAll('.filter-window-btn').forEach(b => b.onclick = () => {
+        document.querySelectorAll('.filter-window-btn').forEach(x => x.classList.remove('on'));
+        b.classList.add('on'); selectedWindowDays = Number(b.dataset.days); rerender();
       });
+      $('btnCopyAll').onclick = copyAllVisible;
+      $('btnMarkAllRead').onclick = markAllRead; $('navRead').onclick = markAllRead;
+      $('btnResetFilters').onclick = () => { search.value = ''; searchQuery = ''; selectedKeywordId = null; clear.classList.add('hidden'); renderKeywordChips(); rerender(); };
 
-      // 2. Reload Button
-      document.getElementById('btnReload').addEventListener('click', () => {
-        loadData();
-        showToast('Memperbarui data berita...', 'info');
-      });
-
-      // 3. Search input
-      const searchInput = document.getElementById('inputSearchText');
-      const btnClear = document.getElementById('btnClearSearch');
-
-      searchInput.addEventListener('input', (e) => {
-        searchQuery = e.target.value;
-        if (searchQuery) {
-          btnClear.classList.remove('hidden');
-        } else {
-          btnClear.classList.add('hidden');
+      /* add keyword form */
+      const inKw = $('inputKeywordText'), inSyn = $('inputKeywordSynonyms'), err = $('addKeywordError');
+      const showErr = m => { $('addKeywordErrorText').textContent = m; err.classList.remove('hidden'); };
+      inKw.oninput = () => { $('keywordCharCounter').textContent = `${inKw.value.length}/60`; err.classList.add('hidden'); };
+      $('btnToggleSynonym').onclick = () => { $('synonymInputWrapper').classList.remove('hidden'); $('btnToggleSynonym').classList.add('hidden'); };
+      $('btnCancelSynonym').onclick = () => { $('synonymInputWrapper').classList.add('hidden'); $('btnToggleSynonym').classList.remove('hidden'); inSyn.value = ''; };
+      $('formAddKeyword').onsubmit = async e => {
+        e.preventDefault(); err.classList.add('hidden');
+        const text = inKw.value.trim(), kws = rawKeywordsData?.keywords || [];
+        if (!text) return showErr('Kata kunci tidak boleh kosong.');
+        if (kws.length >= 20) return showErr('Batas maksimal 20 kata kunci telah tercapai.');
+        if (kws.some(k => k.text.toLowerCase() === text.toLowerCase())) return showErr('Kata kunci sudah ada dalam daftar.');
+        const synonyms = inSyn.value.split(',').map(s => s.trim()).filter(Boolean);
+        if (await updateKeywordsOnGitHub([{ id: `k${Date.now()}`, text, synonyms, active: true }, ...kws], `Tambah keyword ${text}`)) {
+          inKw.value = ''; inSyn.value = ''; $('keywordCharCounter').textContent = '0/60'; $('btnCancelSynonym').click();
         }
-        renderNewsGroups();
-        lucide.createIcons();
-      });
+      };
 
-      btnClear.addEventListener('click', () => {
-        searchInput.value = '';
-        searchQuery = '';
-        btnClear.classList.add('hidden');
-        renderNewsGroups();
-        lucide.createIcons();
-      });
+      /* admin modal */
+      const modal = $('modalAdminConfig');
+      ['btnAdminMode', 'btnConfigAdmin', 'navAdmin'].forEach(id => $(id).onclick = openAdminModal);
+      ['btnCloseAdminModal', 'btnCancelAdminModal'].forEach(id => $(id).onclick = () => modal.classList.add('hidden'));
+      modal.onclick = e => { if (e.target === modal) modal.classList.add('hidden'); };
+      $('btnSaveAdminToken').onclick = () => {
+        const token = $('inputGithubToken').value.trim(), repo = $('inputRepoName').value.trim();
+        if (!token || !repo) return alert('Mohon isi token GitHub dan nama repositori.');
+        lsSet(KEYS.TOKEN, token); lsSet(KEYS.REPO, repo);
+        modal.classList.add('hidden'); updateAdminUI(); renderKeywordsList(); icons();
+        showToast('Pengaturan mode admin tersimpan', 'success');
+      };
+      $('btnClearToken').onclick = () => {
+        lsDel(KEYS.TOKEN); lsDel(KEYS.REPO); modal.classList.add('hidden');
+        updateAdminUI(); renderKeywordsList(); icons(); showToast('Token dihapus. Kembali ke mode baca saja.');
+      };
 
-      // 4. Sort select
-      document.getElementById('selectSortGroups').addEventListener('change', (e) => {
-        sortBy = e.target.value;
-        renderNewsGroups();
-        lucide.createIcons();
-      });
-
-      // 5. Chronological order toggle
-      const btnChrono = document.getElementById('btnToggleChronological');
-      const chronoText = document.getElementById('chronologicalText');
-      btnChrono.addEventListener('click', () => {
-        itemOrder = (itemOrder === 'newest') ? 'oldest' : 'newest';
-        chronoText.textContent = itemOrder === 'newest' ? 'Terbaru Dulu' : 'Kronologis';
-        renderNewsGroups();
-        lucide.createIcons();
-      });
-
-      // 6. Expand all toggle
-      const btnExpandAll = document.getElementById('btnToggleExpandAll');
-      const expandText = document.getElementById('expandAllText');
-      btnExpandAll.addEventListener('click', () => {
-        isAllExpanded = !isAllExpanded;
-        expandedGroups.clear();
-        expandText.textContent = isAllExpanded ? 'Tutup Semua' : 'Buka Semua';
-        renderNewsGroups();
-        lucide.createIcons();
-      });
-
-      // 7. Window Days filter buttons
-      document.querySelectorAll('.filter-window-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll('.filter-window-btn').forEach(b => {
-            b.className = 'filter-window-btn px-2 py-1 rounded-lg transition-colors font-medium text-slate-400';
-          });
-          e.target.className = 'filter-window-btn px-2 py-1 rounded-lg transition-colors font-medium bg-blue-600 text-white';
-          selectedWindowDays = Number(e.target.dataset.days);
-          renderNewsGroups();
-          lucide.createIcons();
-        });
-      });
-
-      // 8. Mark all read
-      document.getElementById('btnMarkAllRead').addEventListener('click', () => {
-        if (!rawBeritaData?.groups) return;
-        let count = 0;
-        for (const g of rawBeritaData.groups) {
-          for (const item of g.items) {
-            if (!seenLinks.has(item.link)) {
-              seenLinks.add(item.link);
-              count++;
-            }
-          }
-        }
-        persistSeenLinks();
-        renderNewsGroups();
-        showToast(`${count} berita ditandai sebagai sudah dibaca!`, 'success');
-        lucide.createIcons();
-      });
-
-      // 9. Reset filter button
-      document.getElementById('btnResetFilters').addEventListener('click', () => {
-        searchInput.value = '';
-        searchQuery = '';
-        selectedKeywordId = null;
-        btnClear.classList.add('hidden');
-        renderKeywordChips();
-        renderNewsGroups();
-        lucide.createIcons();
-      });
-
-      // 10. Add Keyword Form
-      const addForm = document.getElementById('formAddKeyword');
-      const inputKw = document.getElementById('inputKeywordText');
-      const inputSyn = document.getElementById('inputKeywordSynonyms');
-      const charCounter = document.getElementById('keywordCharCounter');
-      const errBox = document.getElementById('addKeywordError');
-      const errText = document.getElementById('addKeywordErrorText');
-
-      inputKw.addEventListener('input', (e) => {
-        charCounter.textContent = `${e.target.value.length}/60`;
-        errBox.classList.add('hidden');
-      });
-
-      // Synonyms toggle
-      const btnToggleSyn = document.getElementById('btnToggleSynonym');
-      const synWrapper = document.getElementById('synonymInputWrapper');
-      btnToggleSyn.addEventListener('click', () => {
-        synWrapper.classList.remove('hidden');
-        btnToggleSyn.classList.add('hidden');
-      });
-      document.getElementById('btnCancelSynonym').addEventListener('click', () => {
-        synWrapper.classList.add('hidden');
-        btnToggleSyn.classList.remove('hidden');
-        inputSyn.value = '';
-      });
-
-      addForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errBox.classList.add('hidden');
-
-        const text = inputKw.value.trim();
-        if (!text) {
-          errText.textContent = 'Kata kunci tidak boleh kosong.';
-          errBox.classList.remove('hidden');
-          return;
-        }
-
-        if (text.length > 60) {
-          errText.textContent = 'Maksimal 60 karakter.';
-          errBox.classList.remove('hidden');
-          return;
-        }
-
-        const keywords = rawKeywordsData?.keywords || [];
-        if (keywords.length >= 20) {
-          errText.textContent = 'Batas maksimal 20 kata kunci telah tercapai.';
-          errBox.classList.remove('hidden');
-          return;
-        }
-
-        const isDupe = keywords.some(k => k.text.toLowerCase() === text.toLowerCase());
-        if (isDupe) {
-          errText.textContent = 'Kata kunci sudah ada dalam daftar.';
-          errBox.classList.remove('hidden');
-          return;
-        }
-
-        const synonyms = inputSyn.value.split(',').map(s => s.trim()).filter(Boolean);
-
-        const newKeyword = {
-          id: `k${Date.now()}`,
-          text,
-          synonyms,
-          active: true,
-        };
-
-        const success = await updateKeywordsOnGitHub([newKeyword, ...keywords], `Tambah keyword ${text}`);
-        if (success) {
-          inputKw.value = '';
-          inputSyn.value = '';
-          charCounter.textContent = '0/60';
-          synWrapper.classList.add('hidden');
-          btnToggleSyn.classList.remove('hidden');
-        }
-      });
-
-      // 11. Admin Modal & Token Management
-      const modalAdmin = document.getElementById('modalAdminConfig');
-      const inputToken = document.getElementById('inputGithubToken');
-      const inputRepo = document.getElementById('inputRepoName');
-
-      document.getElementById('btnAdminMode').addEventListener('click', () => {
-        inputToken.value = localStorage.getItem(STORAGE_KEYS.GITHUB_TOKEN) || '';
-        inputRepo.value = localStorage.getItem(STORAGE_KEYS.GITHUB_REPO) || '';
-        modalAdmin.classList.remove('hidden');
-      });
-
-      document.getElementById('btnConfigAdmin').addEventListener('click', () => {
-        inputToken.value = localStorage.getItem(STORAGE_KEYS.GITHUB_TOKEN) || '';
-        inputRepo.value = localStorage.getItem(STORAGE_KEYS.GITHUB_REPO) || '';
-        modalAdmin.classList.remove('hidden');
-      });
-
-      document.getElementById('btnCloseAdminModal').addEventListener('click', () => {
-        modalAdmin.classList.add('hidden');
-      });
-      document.getElementById('btnCancelAdminModal').addEventListener('click', () => {
-        modalAdmin.classList.add('hidden');
-      });
-
-      document.getElementById('btnSaveAdminToken').addEventListener('click', () => {
-        const token = inputToken.value.trim();
-        const repo = inputRepo.value.trim();
-
-        if (!token || !repo) {
-          alert('Mohon isi token GitHub dan nama repo.');
-          return;
-        }
-
-        localStorage.setItem(STORAGE_KEYS.GITHUB_TOKEN, token);
-        localStorage.setItem(STORAGE_KEYS.GITHUB_REPO, repo);
-        modalAdmin.classList.add('hidden');
-        updateAdminUI();
-        renderKeywordsList();
-        lucide.createIcons();
-        showToast('Pengaturan mode admin berhasil disimpan!', 'success');
-      });
-
-      document.getElementById('btnClearToken').addEventListener('click', () => {
-        localStorage.removeItem(STORAGE_KEYS.GITHUB_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.GITHUB_REPO);
-        inputToken.value = '';
-        inputRepo.value = '';
-        modalAdmin.classList.add('hidden');
-        updateAdminUI();
-        renderKeywordsList();
-        lucide.createIcons();
-        showToast('Token admin dihapus. Mode kembali ke baca-saja.', 'info');
-      });
-
-      // 12. Export JSON
-      document.getElementById('btnExportJson').addEventListener('click', () => {
+      /* export / import */
+      $('btnExportJson').onclick = () => {
         if (!rawKeywordsData) return;
-        const jsonStr = JSON.stringify(rawKeywordsData, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `keywords-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('File JSON berhasil diunduh', 'success');
-      });
-
-      // 13. Import JSON
-      document.getElementById('inputImportJson').addEventListener('change', (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(rawKeywordsData, null, 2)], { type: 'application/json' }));
+        const a = Object.assign(document.createElement('a'), { href: url, download: `keywords-${new Date().toISOString().slice(0, 10)}.json` });
+        a.click(); URL.revokeObjectURL(url); showToast('File JSON diunduh', 'success');
+      };
+      $('inputImportJson').onchange = e => {
+        const file = e.target.files?.[0]; if (!file) return;
+        const r = new FileReader();
+        r.onload = async ev => {
           try {
-            const data = JSON.parse(event.target.result);
-            const list = Array.isArray(data) ? data : data.keywords;
-            if (!Array.isArray(list) || list.length === 0) {
-              throw new Error('Format JSON tidak valid atau kosong.');
-            }
-            const success = await updateKeywordsOnGitHub(list, 'Impor keywords dari file JSON');
-            if (success) {
-              showToast(`Berhasil mengimpor ${list.length} kata kunci!`, 'success');
-            }
-          } catch (err) {
-            alert('Gagal mengimpor JSON: ' + err.message);
-          }
+            const data = JSON.parse(ev.target.result), list = Array.isArray(data) ? data : data.keywords;
+            if (!Array.isArray(list) || !list.length) throw new Error('Format JSON tidak valid atau kosong.');
+            if (await updateKeywordsOnGitHub(list, 'Impor keywords dari file JSON')) showToast(`${list.length} kata kunci diimpor`, 'success');
+          } catch (er) { alert('Gagal mengimpor JSON: ' + er.message); }
         };
-        reader.readAsText(file);
-        e.target.value = '';
-      });
+        r.readAsText(file); e.target.value = '';
+      };
 
-      // 14. Mobile sidebar toggle
-      const btnMobileSidebar = document.getElementById('btnMobileSidebar');
-      const sidebar = document.getElementById('sidebarKeywords');
-      btnMobileSidebar.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden');
-      });
+      /* mobile nav */
+      const side = $('sidebarKeywords'), navTopics = $('navTopics'), navHome = $('navHome');
+      const setNav = topics => { side.classList.toggle('open', topics); navTopics.classList.toggle('on', topics); navHome.classList.toggle('on', !topics); };
+      navTopics.onclick = () => setNav(!side.classList.contains('open'));
+      navHome.onclick = () => { setNav(false); scrollTo({ top: 0, behavior: 'smooth' }); };
 
-      // 15. Initial Data Load & Polling (PRD: "Polling ringan tiap 5 menit")
       loadData();
       setInterval(loadData, 5 * 60 * 1000);
     });
   </script>
+  <style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+  </style>
 </body>
+
 </html>
