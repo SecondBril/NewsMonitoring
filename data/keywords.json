@@ -1,0 +1,48 @@
+{
+  "settings": {
+    "windowDays": 7,
+    "maxDerivedPerKeyword": 8
+  },
+  "keywords": [
+    {
+      "id": "k1",
+      "text": "kebakaran hutan",
+      "synonyms": [
+        "karhutla",
+        "hutan terbakar",
+        "lahan terbakar",
+        "kabut asap"
+      ],
+      "active": true
+    },
+    {
+      "id": "k2",
+      "text": "banjir",
+      "synonyms": [
+        "banjir bandang",
+        "genangan air",
+        "tanggul jebol"
+      ],
+      "active": true
+    },
+    {
+      "id": "k3",
+      "text": "gempa bumi",
+      "synonyms": [
+        "gempa",
+        "guncangan gempa",
+        "tsunami"
+      ],
+      "active": true
+    },
+    {
+      "id": "k4",
+      "text": "IKN Nusantara",
+      "synonyms": [
+        "ibu kota nusantara",
+        "pembangunan IKN"
+      ],
+      "active": true
+    }
+  ]
+}

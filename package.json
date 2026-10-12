@@ -1,0 +1,13 @@
+{
+  "name": "news-monitor-static",
+  "version": "1.0.0",
+  "description": "News Monitor Otomatis - Versi HTML Statis (GitHub Pages + GitHub Actions)",
+  "type": "module",
+  "scripts": {
+    "scrape": "node scripts/scrape.mjs",
+    "test": "node scripts/scrape.mjs"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.11.2"
+  }
+}
